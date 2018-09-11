@@ -32,6 +32,8 @@ endif()
 option(WITH_POSIX_AVS_TIME "Enable avs_time_real_now() and avs_time_monotonic_now() implementation based on POSIX clock_gettime()" "${POSIX_AVS_TIME_DEFAULT}")
 if(WITH_POSIX_AVS_TIME)
     set(SOURCES ${SOURCES} compat/posix/compat_time.c)
+else()
+    set(SOURCES ${SOURCES} compat/eudyptula/compat_time.c)
 endif()
 
 option(WITH_STANDARD_ALLOCATOR "Enable default implementation of avs_malloc/calloc/realloc/free" ON)
