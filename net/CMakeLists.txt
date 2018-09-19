@@ -1,4 +1,5 @@
 # Copyright 2017-2018 AVSystem <avsystem@avsystem.com>
+# Copyright 2018 Nikolaj Due Oesterbye <nikolaj@due-oesterbye.dk>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,9 +17,19 @@ set(POSIX_AVS_SOCKET_DEFAULT OFF)
 if(WIN32 OR UNIX OR POSIX_COMPAT_HEADER)
     set(POSIX_AVS_SOCKET_DEFAULT ON)
 endif()
+set(SARA_N2_SOCKET_DEFAULT ON)
+if(WIN32 OR UNIX OR POSIX_COMPAT_HEADER)
+    set(SARA_N2_SOCKET_DEFAULT OFF)
+endif()
+
 
 option(WITH_POSIX_AVS_SOCKET "Enable avs_socket implementation based on POSIX socket API" "${POSIX_AVS_SOCKET_DEFAULT}")
+option(WITH_SARA_N2_SOCKET "Enable SARA-N2 socket implementation" "${SARA_N2_SOCKET_DEFAULT}")
 cmake_dependent_option(WITH_TLS_SESSION_PERSISTENCE "Enable support for TLS session persistence" ON WITH_AVS_PERSISTENCE OFF)
+
+if(WITH_POSIX_AVS_SOCKET AND WITH_SARA_N2_SOCKET)
+    message(FATAL_ERROR "Only one of WITH_POSIX_AVS_SOCKET and WITH_SARA_N2_SOCKET are allowed at a time.")
+endif()
 
 set(SOURCES
     src/addrinfo.c
@@ -69,6 +80,21 @@ if(WITH_POSIX_AVS_SOCKET)
     endif()
     if(NOT HAVE_INET_PTON)
         set(SOURCES ${SOURCES} compat/posix/inet_pton.c)
+    endif()
+elseif(WITH_SARA_N2_SOCKET)
+    include_directories("${CMAKE_CURRENT_BINARY_DIR}/compat/saran2")
+    set(SOURCES ${SOURCES}
+        compat/saran2/saran2_interface.c
+        compat/saran2/saran2_impl.c)
+    set(PRIVATE_HEADERS ${PRIVATE_HEADERS}
+        compat/saran2/saran2_interface.h)
+    set(PUBLIC_HEADERS ${PUBLIC_HEADERS}
+        include_public/avsystem/commons/saran2.h)
+    if(NOT HAVE_INET_NTOP)
+        set(SOURCES ${SOURCES} compat/saran2/inet_ntop.c)
+    endif()
+    if(NOT HAVE_INET_PTON)
+        set(SOURCES ${SOURCES} compat/saran2/inet_pton.c)
     endif()
 endif()
 
